@@ -2,6 +2,8 @@ import axios from "axios";
 import { prismaClient } from "../../client/db";
 import JWTService from "../../services/jwt";
 import { GraphqlContext } from "../../interfaces";
+import { Tweet } from "../tweet";
+import { User } from "@prisma/client";
 
 interface GoogleTokenResult {
     iss?: string;
@@ -74,4 +76,14 @@ const queries = {
     },
 };
 
-export const resolvers = { queries };
+
+
+// also there is no extra resolver for tweets 
+//this time u want tweets for a  user 
+const extraResolvers ={
+    User:{
+        tweets:(parent:User) =>
+            prismaClient.tweet.findMany({where :{author:{id:parent.id}}}),
+    },
+};
+export const resolvers = { queries ,extraResolvers};

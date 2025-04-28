@@ -4,7 +4,6 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -17,12 +16,27 @@ datasource db {
 model User {
   id              String  @id @default(cuid())
   firstName       String
-  lastName        String?//? means optional
+  lastName        String? //? means optional
   email           String  @unique
   profileImageURL String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-} // these are model or basic properties of user 
 
+  tweets Tweet[] //tweets can have one author and one author can have many(n) tweets
+}
+// these are model or basic properties of user 
 
+model Tweet {
+  id       String  @id @default(cuid())
+  content  String
+  imageURL String?
+
+  //we want to create a foreign relation
+  author   User   @relation(fields: [authorId], references: [id])
+  // author  of type "User" ,where we have relation where this "authorId" references the id of user
+  authorId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

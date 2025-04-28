@@ -60,4 +60,11 @@ const queries = {
         return db_1.prismaClient.user.findMany();
     }),
 };
-exports.resolvers = { queries };
+// also there is no extra resolver for tweets 
+//this time u want tweets for a  user 
+const extraResolvers = {
+    User: {
+        tweets: (parent) => db_1.prismaClient.tweet.findMany({ where: { author: { id: parent.id } } }),
+    },
+};
+exports.resolvers = { queries, extraResolvers };
