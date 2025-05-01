@@ -20,7 +20,7 @@ class JWTService {
             return jsonwebtoken_1.default.verify(token, JWT_secret);
         }
         catch (error) {
-            null;
+            return null;
         }
     }
 }

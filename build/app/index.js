@@ -43,12 +43,13 @@ function initServer() {
         });
         yield graphqlServer.start();
         app.use("/graphql", (0, express4_1.expressMiddleware)(graphqlServer, {
-            context: (_a) => __awaiter(this, [_a], void 0, function* ({ req, res }) {
-                return {
-                    user: req.headers.authorization
-                        ? jwt_1.default.decodeToken(req.headers.authorization.split("Bearer ")[1])
-                        : undefined,
-                };
+            context: (_a) => __awaiter(this, [_a], void 0, function* ({ req }) {
+                var _b;
+                const token = (_b = req.headers.authorization) === null || _b === void 0 ? void 0 : _b.split("Bearer ")[1];
+                const user = token ? jwt_1.default.decodeToken(token) : undefined;
+                //  Log the decoded user for debugging
+                console.log("Decoded user from JWT:", user);
+                return { user };
             }),
         }));
         return app;

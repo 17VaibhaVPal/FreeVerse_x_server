@@ -20,13 +20,13 @@ const queries = {
     verifyGoogleToken: (parent_1, _a) => __awaiter(void 0, [parent_1, _a], void 0, function* (parent, { token }) {
         //here user will give me the google token
         const googleToken = token;
-        const googleOauthURL = new URL('https://oauth2.googleapis.com/tokeninfo');
-        googleOauthURL.searchParams.set('id_token', googleToken);
-        // i will ask useer that  who is this user 
+        const googleOauthURL = new URL("https://oauth2.googleapis.com/tokeninfo");
+        googleOauthURL.searchParams.set("id_token", googleToken);
+        // i will ask useer that  who is this user
         const { data } = yield axios_1.default.get(googleOauthURL.toString(), {
-            responseType: 'json'
+            responseType: "json",
         }); // by this u r making API call to  gooogle server and u r passing the googleToken of user
-        //data => data os user 
+        //data => data os user
         const user = yield db_1.prismaClient.user.findUnique({
             where: { email: data.email },
         }); //make a call to check if user is there exist or not in database
@@ -37,14 +37,16 @@ const queries = {
                     firstName: data.given_name,
                     lastName: data.family_name,
                     profileImageURL: data.picture,
-                }
+                },
             });
         } // if user not exist  ,create a user
         //we haev to generate a token for user , for this we need a library "jsonwebtoken"
         // no user exist then create a token for user and return token
-        const userIndb = yield db_1.prismaClient.user.findUnique({ where: { email: data.email }, });
+        const userIndb = yield db_1.prismaClient.user.findUnique({
+            where: { email: data.email },
+        });
         if (!userIndb)
-            throw new Error('User with mail not found ');
+            throw new Error("User with mail not found ");
         const userToken = yield jwt_1.default.generateTokenForUser(userIndb);
         return userToken;
     }),
@@ -56,12 +58,14 @@ const queries = {
         const user = yield db_1.prismaClient.user.findUnique({ where: { id } });
         return user;
     }),
+    getUserById: (parent_1, _a, ctx_1) => __awaiter(void 0, [parent_1, _a, ctx_1], void 0, function* (parent, { id }, ctx) { return db_1.prismaClient.user.findUnique({ where: { id } }); }),
+    //we want to ffetch user info by id
     users: () => __awaiter(void 0, void 0, void 0, function* () {
         return db_1.prismaClient.user.findMany();
     }),
 };
-// also there is no extra resolver for tweets 
-//this time u want tweets for a  user 
+// also there is no extra resolver for tweets
+//this time u want tweets for a  user
 const extraResolvers = {
     User: {
         tweets: (parent) => db_1.prismaClient.tweet.findMany({ where: { author: { id: parent.id } } }),
