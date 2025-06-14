@@ -12,8 +12,8 @@ exports.types = `#graphql
             id :ID!
             content :String!
             imageURL :  String
-
             author :User
+             isBookmarked: Boolean!
         
         }
 

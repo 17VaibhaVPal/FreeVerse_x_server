@@ -8,32 +8,68 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.resolvers = void 0;
 const db_1 = require("../../client/db");
+const client_s3_1 = require("@aws-sdk/client-s3");
+const s3_request_presigner_1 = require("@aws-sdk/s3-request-presigner");
+const user_1 = __importDefault(require("../../services/user"));
+const tweet_1 = __importDefault(require("../../services/tweet"));
+const s3Client = new client_s3_1.S3Client({
+    region: process.env.AWS_DEFAULT_REGION,
+});
 const queries = {
-    getAllTweets: () => db_1.prismaClient.tweet.findMany({ orderBy: { createdAt: 'desc' } }),
+    getAllTweets: () => tweet_1.default.getAllTweets(),
+    getSignedURLForTweet: (parent_1, _a, ctx_1) => __awaiter(void 0, [parent_1, _a, ctx_1], void 0, function* (parent, { imageType, imageName }, ctx) {
+        var _b;
+        if (!((_b = ctx.user) === null || _b === void 0 ? void 0 : _b.id) || !ctx.user)
+            throw new Error("Unauthorised");
+        const allowedImageType = [
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/webp",
+        ];
+        if (!allowedImageType.includes(imageType))
+            throw new Error("Unsupported image type");
+        const fileExtension = imageType.split("/")[1]; // "jpeg", "png", etc.
+        const putObjectCommand = new client_s3_1.PutObjectCommand({
+            Bucket: process.env.AWS_S3_BUCKET,
+            Key: `upload/${ctx.user.id}/tweets/${imageName}-${Date.now()}.${fileExtension}`,
+            ContentType: imageType,
+        });
+        const signedURL = yield (0, s3_request_presigner_1.getSignedUrl)(s3Client, putObjectCommand);
+        return signedURL;
+    }),
 };
 const mutations = {
     createTweet: (parent_1, _a, ctx_1) => __awaiter(void 0, [parent_1, _a, ctx_1], void 0, function* (parent, { payload }, ctx) {
         if (!ctx.user)
             throw new Error("You  are not authenticated");
-        const tweet = yield db_1.prismaClient.tweet.create({
-            data: {
-                content: payload.content,
-                imageURL: payload.imageURL,
-                author: { connect: { id: ctx.user.id } },
-            },
-        });
+        const tweet = yield tweet_1.default.createTweet(Object.assign(Object.assign({}, payload), { userId: ctx.user.id }));
         return tweet;
-    })
+    }),
 };
-//as earlier there was no resolver for this "author" , so create extra resolver 
+//as earlier there was no resolver for this "author" , so create extra resolver
 const extraResolvers = {
     Tweet: {
-        //so for  a Tweet if u r asking m for an author , Tweet is the parent 
-        author: (parent) => db_1.prismaClient.user.findUnique({ where: { id: parent.authorId } }),
+        //so for  a Tweet if u r asking m for an author , Tweet is the parent
+        author: (parent) => user_1.default.getUserById(parent.authorId),
         //so basically u r finding the user from the tweet's authorId
+        isBookmarked: (parent, _args, ctx) => __awaiter(void 0, void 0, void 0, function* () {
+            if (!ctx.user)
+                return false;
+            const existingBookmark = yield db_1.prismaClient.bookmark.findFirst({
+                where: {
+                    userId: ctx.user.id,
+                    tweetId: parent.id,
+                },
+            });
+            return !!existingBookmark;
+        }),
     },
 };
 exports.resolvers = { mutations, extraResolvers, queries };
