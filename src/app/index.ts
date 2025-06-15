@@ -3,9 +3,7 @@ import { ApolloServer } from "@apollo/server";
 import { expressMiddleware } from "@apollo/server/express4";
 import { User } from "./user";
 import cors from "cors";
-import { DateTimeResolver, GraphQLDateTime } from 'graphql-scalars';
-
-
+import { DateTimeResolver, GraphQLDateTime } from "graphql-scalars";
 
 import JWTService from "../services/jwt";
 import { GraphqlContext } from "../interfaces";
@@ -17,6 +15,9 @@ export async function initServer() {
   app.use(express.json());
   app.use(cors());
 
+  app.get("/", (req, res) =>
+    res.status(200).json({ message: "Everything is fine" })
+  );
   const graphqlServer = new ApolloServer<GraphqlContext>({
     typeDefs: `
          scalar DateTime 
@@ -35,7 +36,7 @@ export async function initServer() {
         `,
 
     resolvers: {
-       DateTime: GraphQLDateTime,
+      DateTime: GraphQLDateTime,
       Query: {
         ...User.resolvers.queries,
         ...Tweet.resolvers.queries,
