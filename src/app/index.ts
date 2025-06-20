@@ -14,10 +14,12 @@ export async function initServer() {
 
   app.use(express.json());
 
-  app.use(cors({
-  origin:  "https://freeversex-hazel.vercel.app",  //  //http://localhost:3000
-  credentials: true,
-}));
+  app.use(
+    cors({
+      origin: "https://studio.apollographql.com",
+      credentials: true,
+    })
+  );
 
   const graphqlServer = new ApolloServer<GraphqlContext>({
     typeDefs: `
@@ -72,7 +74,6 @@ export async function initServer() {
 
         return { user };
       },
-        
     })
   );
 
