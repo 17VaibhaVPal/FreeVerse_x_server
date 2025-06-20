@@ -15,11 +15,10 @@ export async function initServer() {
   app.use(express.json());
 
   app.use(cors({
-  origin: 'https://freeversex-hazel.vercel.app', 
+  origin:  "https://freeversex-hazel.vercel.app",  //  //http://localhost:3000
   credentials: true,
 }));
 
-  
   const graphqlServer = new ApolloServer<GraphqlContext>({
     typeDefs: `
          scalar DateTime 
