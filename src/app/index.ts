@@ -16,7 +16,10 @@ export async function initServer() {
 
   app.use(
     cors({
-      origin: "https://studio.apollographql.com",
+      origin: [
+        "https://studio.apollographql.com",
+        "https://free-verse-x.vercel.app",
+      ],
       credentials: true,
     })
   );
@@ -59,6 +62,14 @@ export async function initServer() {
 
   app.use(
     "/graphql",
+    cors<cors.CorsRequest>({
+      origin: [
+        "https://studio.apollographql.com",
+        "https://free-verse-x.vercel.app",
+      ],
+      credentials: true,
+    }),
+
     expressMiddleware(graphqlServer, {
       context: async ({ req }) => {
         const authHeader = req.headers.authorization || "";
