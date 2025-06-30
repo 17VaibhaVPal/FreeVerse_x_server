@@ -41,5 +41,31 @@ class TweetService {
             return tweets;
         });
     }
+    static createComment(tweetId, userId, content) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return db_1.prismaClient.comment.create({
+                data: {
+                    tweetId,
+                    userId,
+                    content,
+                },
+                include: {
+                    user: true, // so frontend can show name and image
+                },
+            });
+        });
+    }
+    // 👇 NEW COMMENT CODE - fetch all comments for a tweet
+    static getComments(tweetId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return db_1.prismaClient.comment.findMany({
+                where: { tweetId },
+                orderBy: { createdAt: "asc" },
+                include: {
+                    user: true, // return author info for each comment
+                },
+            });
+        });
+    }
 }
 exports.default = TweetService;

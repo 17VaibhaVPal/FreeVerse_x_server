@@ -34,8 +34,6 @@ type User {
   getUserById(id: ID!): User
   getBookmarkedTweets: [Tweet!]!
   getMessagesWithUser(to: ID!): [Message!]!
-  getConversations: [User!]!  # ✅ ADD THIS LINE
+  getConversations: [User!]!  
 }
-
-
 `;

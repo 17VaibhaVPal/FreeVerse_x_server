@@ -37,6 +37,7 @@ model User {
   email           String     @unique
   password       String?
   profileImageURL String?
+ 
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
   bookmarks       Bookmark[]
@@ -45,6 +46,8 @@ model User {
   tweets          Tweet[]
   sentMessages     Message[] @relation("SentMessages")
   receivedMessages Message[] @relation("ReceivedMessages")
+    likes           Like[] 
+     comments Comment[]  
 }
 
 model Follows {
@@ -61,8 +64,33 @@ model Tweet {
   content   String
   imageURL  String?
   authorId  String
+    likes     Like[]  
+     comments Comment[]  
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   bookmarks Bookmark[]
   author    User       @relation(fields: [authorId], references: [id])
+}
+
+// added new
+model Like {
+  id      String   @id @default(cuid())
+  tweet   Tweet    @relation(fields: [tweetId], references: [id])
+  tweetId String
+  user    User     @relation(fields: [userId], references: [id])
+  userId  String
+
+  @@unique([tweetId, userId])
+}
+
+// added new 2 
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  userId    String
+  tweetId   String
+  createdAt DateTime @default(now())
+
+  tweet     Tweet    @relation(fields: [tweetId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 }

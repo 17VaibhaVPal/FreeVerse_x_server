@@ -10,4 +10,7 @@ exports.mutations = `#graphql
   removeBookmark(tweetId: ID!): Boolean  
    sendMessage(to: ID!, content: String!): Boolean
      markMessagesAsRead(fromId: ID!): Boolean
+
+    likeTweet(tweetId: ID!): Boolean       # 👈 NEW
+  unlikeTweet(tweetId: ID!): Boolean     # 👈 NEW
 `;

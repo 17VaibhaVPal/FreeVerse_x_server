@@ -17,6 +17,7 @@ export async function initServer() {
   app.use(
     cors({
       origin: [
+         "http://localhost:3000",
         "https://studio.apollographql.com",
         "https://free-verse-x.vercel.app",
       ],
@@ -64,6 +65,7 @@ export async function initServer() {
     "/graphql",
     cors<cors.CorsRequest>({
       origin: [
+        "http://localhost:3000",
         "https://studio.apollographql.com",
         "https://free-verse-x.vercel.app",
       ],

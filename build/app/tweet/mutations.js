@@ -4,4 +4,5 @@ exports.mutations = void 0;
 exports.mutations = `#graphql
         createTweet(payload: CreateTweetData!):Tweet
 
+         createComment(tweetId: ID!, content: String!): Comment!  
 `;

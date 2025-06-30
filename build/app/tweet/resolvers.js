@@ -25,7 +25,7 @@ const queries = {
     getAllTweets: () => tweet_1.default.getAllTweets(),
     getSignedURLForTweet: (parent_1, _a, ctx_1) => __awaiter(void 0, [parent_1, _a, ctx_1], void 0, function* (parent, { imageType, imageName }, ctx) {
         var _b;
-        if (!((_b = ctx.user) === null || _b === void 0 ? void 0 : _b.id) || !ctx.user)
+        if (!((_b = ctx.user) === null || _b === void 0 ? void 0 : _b.id))
             throw new Error("Unauthorised");
         const allowedImageType = [
             "image/jpeg",
@@ -35,7 +35,7 @@ const queries = {
         ];
         if (!allowedImageType.includes(imageType))
             throw new Error("Unsupported image type");
-        const fileExtension = imageType.split("/")[1]; // "jpeg", "png", etc.
+        const fileExtension = imageType.split("/")[1];
         const putObjectCommand = new client_s3_1.PutObjectCommand({
             Bucket: process.env.AWS_S3_BUCKET,
             Key: `upload/${ctx.user.id}/tweets/${imageName}-${Date.now()}.${fileExtension}`,
@@ -44,13 +44,35 @@ const queries = {
         const signedURL = yield (0, s3_request_presigner_1.getSignedUrl)(s3Client, putObjectCommand);
         return signedURL;
     }),
+    // ✅ NEW: Fetch comments for a tweet
+    getComments: (parent_1, _a, ctx_1) => __awaiter(void 0, [parent_1, _a, ctx_1], void 0, function* (parent, { tweetId }, ctx) {
+        return yield db_1.prismaClient.comment.findMany({
+            where: { tweetId },
+            include: { user: true },
+            orderBy: { createdAt: "asc" },
+        });
+    }),
 };
 const mutations = {
     createTweet: (parent_1, _a, ctx_1) => __awaiter(void 0, [parent_1, _a, ctx_1], void 0, function* (parent, { payload }, ctx) {
         if (!ctx.user)
-            throw new Error("You  are not authenticated");
+            throw new Error("You are not authenticated");
         const tweet = yield tweet_1.default.createTweet(Object.assign(Object.assign({}, payload), { userId: ctx.user.id }));
         return tweet;
+    }),
+    // ✅ NEW: Create a comment
+    createComment: (parent_1, _a, ctx_1) => __awaiter(void 0, [parent_1, _a, ctx_1], void 0, function* (parent, { tweetId, content }, ctx) {
+        if (!ctx.user)
+            throw new Error("You are not authenticated");
+        const comment = yield db_1.prismaClient.comment.create({
+            data: {
+                tweetId,
+                content,
+                userId: ctx.user.id,
+            },
+            include: { user: true },
+        });
+        return comment;
     }),
 };
 //as earlier there was no resolver for this "author" , so create extra resolver
@@ -70,6 +92,19 @@ const extraResolvers = {
             });
             return !!existingBookmark;
         }),
+        commentsCount: (parent) => __awaiter(void 0, void 0, void 0, function* () {
+            return yield db_1.prismaClient.comment.count({
+                where: { tweetId: parent.id },
+            });
+        }),
+        // ✅ Get list of comments
+        comments: (parent) => __awaiter(void 0, void 0, void 0, function* () {
+            return yield db_1.prismaClient.comment.findMany({
+                where: { tweetId: parent.id },
+                include: { user: true },
+                orderBy: { createdAt: "asc" },
+            });
+        }),
     },
 };
-exports.resolvers = { mutations, extraResolvers, queries };
+exports.resolvers = { mutations, queries, extraResolvers };

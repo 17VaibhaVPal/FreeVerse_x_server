@@ -187,6 +187,34 @@ const extraResolvers = {
             return bookmarks.map((b) => b.tweet);
         }),
     },
+    //added  isLiked and likesCount amd author name at every tweet
+    Tweet: {
+        author: (parent) => {
+            return db_1.prismaClient.user.findUnique({
+                where: { id: parent.authorId },
+            });
+        },
+        isLiked: (parent, _, ctx) => __awaiter(void 0, void 0, void 0, function* () {
+            if (!ctx.user)
+                return false;
+            const existing = yield db_1.prismaClient.like.findUnique({
+                where: {
+                    tweetId_userId: {
+                        tweetId: parent.id,
+                        userId: ctx.user.id,
+                    },
+                },
+            });
+            return !!existing;
+        }),
+        likesCount: (parent) => __awaiter(void 0, void 0, void 0, function* () {
+            return db_1.prismaClient.like.count({
+                where: {
+                    tweetId: parent.id,
+                },
+            });
+        }),
+    },
 };
 const mutations = {
     sendMessage: (_1, _a, ctx_1) => __awaiter(void 0, [_1, _a, ctx_1], void 0, function* (_, { to, content }, ctx) {
@@ -273,6 +301,29 @@ const mutations = {
             where: {
                 userId: ctx.user.id,
                 tweetId,
+            },
+        });
+        return true;
+    }),
+    //added new like/unlike tweet
+    likeTweet: (parent_1, _a, ctx_1) => __awaiter(void 0, [parent_1, _a, ctx_1], void 0, function* (parent, { tweetId }, ctx) {
+        if (!ctx.user)
+            throw new Error("Unauthorized");
+        yield db_1.prismaClient.like.create({
+            data: {
+                tweetId,
+                userId: ctx.user.id,
+            },
+        });
+        return true;
+    }),
+    unlikeTweet: (parent_1, _a, ctx_1) => __awaiter(void 0, [parent_1, _a, ctx_1], void 0, function* (parent, { tweetId }, ctx) {
+        if (!ctx.user)
+            throw new Error("Unauthorized");
+        yield db_1.prismaClient.like.deleteMany({
+            where: {
+                tweetId,
+                userId: ctx.user.id,
             },
         });
         return true;

@@ -1,14 +1,11 @@
-import { GraphQLArgument } from "graphql";
 import { GraphqlContext } from "../../interfaces";
 import { prismaClient } from "../../client/db";
 import {
   S3Client,
-  PutObjectAclCommand,
   PutObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Tweet } from "@prisma/client";
-import { User } from "../user";
 import UserService from "../../services/user";
 import TweetService, { CreateTweetPayload } from "../../services/tweet";
 
@@ -18,12 +15,14 @@ const s3Client = new S3Client({
 
 const queries = {
   getAllTweets: () => TweetService.getAllTweets(),
+
   getSignedURLForTweet: async (
     parent: any,
     { imageType, imageName }: { imageType: string; imageName: string },
     ctx: GraphqlContext
   ) => {
-    if (!ctx.user?.id || !ctx.user) throw new Error("Unauthorised");
+    if (!ctx.user?.id) throw new Error("Unauthorised");
+
     const allowedImageType = [
       "image/jpeg",
       "image/jpg",
@@ -34,20 +33,29 @@ const queries = {
     if (!allowedImageType.includes(imageType))
       throw new Error("Unsupported image type");
 
-    const fileExtension = imageType.split("/")[1]; // "jpeg", "png", etc.
+    const fileExtension = imageType.split("/")[1];
 
     const putObjectCommand = new PutObjectCommand({
       Bucket: process.env.AWS_S3_BUCKET,
-      Key: `upload/${
-        ctx.user.id
-      }/tweets/${imageName}-${Date.now()}.${fileExtension}`,
-
+      Key: `upload/${ctx.user.id}/tweets/${imageName}-${Date.now()}.${fileExtension}`,
       ContentType: imageType,
     });
 
     const signedURL = await getSignedUrl(s3Client, putObjectCommand);
-
     return signedURL;
+  },
+
+  // ✅ NEW: Fetch comments for a tweet
+  getComments: async (
+    parent: any,
+    { tweetId }: { tweetId: string },
+    ctx: GraphqlContext
+  ) => {
+    return await prismaClient.comment.findMany({
+      where: { tweetId },
+      include: { user: true },
+      orderBy: { createdAt: "asc" },
+    });
   },
 };
 
@@ -57,7 +65,7 @@ const mutations = {
     { payload }: { payload: CreateTweetPayload },
     ctx: GraphqlContext
   ) => {
-    if (!ctx.user) throw new Error("You  are not authenticated");
+    if (!ctx.user) throw new Error("You are not authenticated");
 
     const tweet = await TweetService.createTweet({
       ...payload,
@@ -65,6 +73,26 @@ const mutations = {
     });
 
     return tweet;
+  },
+
+  // ✅ NEW: Create a comment
+  createComment: async (
+    parent: any,
+    { tweetId, content }: { tweetId: string; content: string },
+    ctx: GraphqlContext
+  ) => {
+    if (!ctx.user) throw new Error("You are not authenticated");
+
+    const comment = await prismaClient.comment.create({
+      data: {
+        tweetId,
+        content,
+        userId: ctx.user.id,
+      },
+      include: { user: true },
+    });
+
+    return comment;
   },
 };
 
@@ -87,7 +115,22 @@ const extraResolvers = {
 
       return !!existingBookmark;
     },
+
+    commentsCount: async (parent: Tweet) => {
+      return await prismaClient.comment.count({
+        where: { tweetId: parent.id },
+      });
+    },
+
+    // ✅ Get list of comments
+    comments: async (parent: Tweet) => {
+      return await prismaClient.comment.findMany({
+        where: { tweetId: parent.id },
+        include: { user: true },
+        orderBy: { createdAt: "asc" },
+      });
+    },
   },
 };
 
-export const resolvers = { mutations, extraResolvers, queries };
+export const resolvers = { mutations, queries, extraResolvers };

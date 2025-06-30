@@ -220,6 +220,40 @@ const extraResolvers = {
       return bookmarks.map((b) => b.tweet);
     },
   },
+//added  isLiked and likesCount amd author name at every tweet
+
+Tweet: {
+
+    author: (parent: any) => {
+    return prismaClient.user.findUnique({
+      where: { id: parent.authorId },
+    });
+  },
+  
+  isLiked: async (parent: any, _: any, ctx: GraphqlContext) => {
+    if (!ctx.user) return false;
+
+    const existing = await prismaClient.like.findUnique({
+      where: {
+        tweetId_userId: {
+          tweetId: parent.id,
+          userId: ctx.user.id,
+        },
+      },
+    });
+
+    return !!existing;
+  },
+
+  likesCount: async (parent: any) => {
+    return prismaClient.like.count({
+      where: {
+        tweetId: parent.id,
+      },
+    });
+  },
+},
+
 };
 
 const mutations = {
@@ -352,6 +386,43 @@ const mutations = {
     });
     return true;
   },
+
+  //added new like/unlike tweet
+  likeTweet: async (
+  parent: any,
+  { tweetId }: { tweetId: string },
+  ctx: GraphqlContext
+) => {
+  if (!ctx.user) throw new Error("Unauthorized");
+
+  await prismaClient.like.create({
+    data: {
+      tweetId,
+      userId: ctx.user.id,
+    },
+  });
+
+  return true;
+},
+
+unlikeTweet: async (
+  parent: any,
+  { tweetId }: { tweetId: string },
+  ctx: GraphqlContext
+) => {
+  if (!ctx.user) throw new Error("Unauthorized");
+
+  await prismaClient.like.deleteMany({
+    where: {
+      tweetId,
+      userId: ctx.user.id,
+    },
+  });
+
+  return true;
+},
+ 
+
 };
 
 export const resolvers = { queries, extraResolvers, mutations };

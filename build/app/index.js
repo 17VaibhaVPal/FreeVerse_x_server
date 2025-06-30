@@ -26,7 +26,11 @@ function initServer() {
         const app = (0, express_1.default)();
         app.use(express_1.default.json());
         app.use((0, cors_1.default)({
-            origin: "http://localhost:3000", //https://freeversex-hazel.vercel.app
+            origin: [
+                "http://localhost:3000",
+                "https://studio.apollographql.com",
+                "https://free-verse-x.vercel.app",
+            ],
             credentials: true,
         }));
         const graphqlServer = new server_1.ApolloServer({
@@ -49,7 +53,14 @@ function initServer() {
             introspection: true,
         });
         yield graphqlServer.start();
-        app.use("/graphql", (0, express4_1.expressMiddleware)(graphqlServer, {
+        app.use("/graphql", (0, cors_1.default)({
+            origin: [
+                "http://localhost:3000",
+                "https://studio.apollographql.com",
+                "https://free-verse-x.vercel.app",
+            ],
+            credentials: true,
+        }), (0, express4_1.expressMiddleware)(graphqlServer, {
             context: (_a) => __awaiter(this, [_a], void 0, function* ({ req }) {
                 const authHeader = req.headers.authorization || "";
                 const token = authHeader.startsWith("Bearer ")
