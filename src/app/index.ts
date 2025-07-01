@@ -19,7 +19,7 @@ export async function initServer() {
       origin: [
          "http://localhost:3000",
         "https://studio.apollographql.com",
-        "https://free-verse-x.vercel.app",
+        "https://free-verse.vercel.app",
       ],
       credentials: true,
     })
@@ -67,7 +67,7 @@ export async function initServer() {
       origin: [
         "http://localhost:3000",
         "https://studio.apollographql.com",
-        "https://free-verse-x.vercel.app",
+        "https://free-verse.vercel.app",
       ],
       credentials: true,
     }),
